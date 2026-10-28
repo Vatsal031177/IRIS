@@ -1,0 +1,15 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iris-sig-47-harvester"
+version = "1.0.0"
+description = "IRIS-SIG-47 Institutional Money Newsroom & Deal Flow Harvester"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
