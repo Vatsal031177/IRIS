@@ -1,0 +1,36 @@
+services:
+  postgis-db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: iris-sig-47-postgis
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-iris}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./sql/01_init_schema.sql:/docker-entrypoint-initdb.d/01_init_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB:-iris}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  harvester-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iris-sig-47-harvester
+    depends_on:
+      postgis-db:
+        condition: service_healthy
+    environment:
+      IRIS_TASK_ID: IRIS-SIG-47
+      POSTGRES_HOST: postgis-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-iris}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./outputs:/app/outputs
+    command: ["python", "-m", "services.orchestrator.main", "--mode", "fixture"]
