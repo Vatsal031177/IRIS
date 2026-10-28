@@ -1,0 +1,67 @@
+name: IRIS-SIG-47 CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  verify-harvester:
+    runs-on: ubuntu-latest
+
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4-alpine
+        env:
+          POSTGRES_DB: iris
+          POSTGRES_USER: ci_runner_user
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASS || 'ci_ephemeral_test_pass' }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_runner_user -d iris"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize PostgreSQL 16 / PostGIS 3.4 Schema
+        env:
+          PGPASSWORD: ${{ secrets.CI_DB_PASS || 'ci_ephemeral_test_pass' }}
+        run: |
+          psql -h localhost -U ci_runner_user -d iris -f sql/01_init_schema.sql
+
+      - name: Run Automated Pytest Suite
+        run: pytest -v
+
+      - name: Run Pipeline Twice to Verify Idempotent PostGIS Upsert
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: iris
+          POSTGRES_USER: ci_runner_user
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASS || 'ci_ephemeral_test_pass' }}
+        run: |
+          python -m services.orchestrator.main --mode fixture
+          python -m services.orchestrator.main --mode fixture
+
+      - name: Execute SQL Validation Queries
+        env:
+          PGPASSWORD: ${{ secrets.CI_DB_PASS || 'ci_ephemeral_test_pass' }}
+        run: |
+          psql -h localhost -U ci_runner_user -d iris -f sql/02_validation_queries.sql
