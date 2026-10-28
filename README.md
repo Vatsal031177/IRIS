@@ -1,4 +1,49 @@
-# IRIS-SIG-47: Institutional Money Newsroom & Deal Flow Harvester
+iris-sig-47-harvester/
+├── .env.example
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
+├── requirements.txt
+├── README.md
+├── sql/
+│   ├── 01_init_schema.sql
+│   └── 02_validation_queries.sql
+├── services/
+│   ├── __init__.py
+│   ├── common/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   └── models.py
+│   ├── scraper/
+│   │   ├── __init__.py
+│   │   └── harvester.py
+│   ├── processor/
+│   │   ├── __init__.py
+│   │   ├── classifier.py
+│   │   └── georesolver.py
+│   ├── loader/
+│   │   ├── __init__.py
+│   │   └── db_loader.py
+│   └── orchestrator/
+│       ├── __init__.py
+│       └── main.py
+├── tests/
+│   ├── __init__.py
+│   ├── fixtures/
+│   │   ├── listing_page_1.html
+│   │   ├── listing_page_2_empty.html
+│   │   └── article_details.json
+│   └── test_pipeline.py
+└── outputs/
+    ├── sample_signal_ingest.jsonl
+    └── quality_and_error_report.md
+    
+    
+    # IRIS-SIG-47: Institutional Money Newsroom & Deal Flow Harvester
 
 End-to-end microservices ingestion pipeline for **Task ID `IRIS-SIG-47`**, harvesting infrastructure fund launches, institutional allocation mandates, and ESG debt issuance from `https://www.institutional-money.com/news/` using **Integration Pattern B (HTML)** and persisting spatial records into **PostgreSQL 16 / PostGIS 3.4 (`iris_staging.signal_ingest`)**.
 
